@@ -10,14 +10,17 @@ import android.os.Bundle;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity {
@@ -25,9 +28,12 @@ public class MainActivity extends AppCompatActivity {
     Button btn4;
     Button shuffle;
     GridView grid;
-    int n=3;
+    int n=3; //그리드뷰의 행 개수
     ArrayList<Bitmap> images = new ArrayList<Bitmap>(); //자른 이미지들의 연결 리스트
+    Bitmap[] original;
     Bitmap bm;
+    Bitmap w3;
+    Bitmap w4;
     Context context;
 
     @Override
@@ -42,6 +48,10 @@ public class MainActivity extends AppCompatActivity {
         shuffle = (Button)findViewById(R.id.shuffle);
         grid=(GridView)findViewById(R.id.grid);
         this.bm=BitmapFactory.decodeResource(getResources(), R.drawable.doggy); //doggy 이미지를 비트맵으로 받아옴
+        w3=Bitmap.createBitmap(bm,0,0,bm.getWidth()/3, bm.getHeight()/3);
+        w3.eraseColor(Color.WHITE); //3x3 흰색 이미지
+        w4=Bitmap.createBitmap(bm,0,0,bm.getWidth()/4, bm.getHeight()/4);
+        w4.eraseColor(Color.WHITE);//4x4 흰색 이미지
         this.context=this;
 
 
@@ -68,15 +78,49 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Collections.shuffle(images);
-                grid.setAdapter(new ImageAdapter(context, images, n));
+                grid.setAdapter(new ImageAdapter(context, images,n));
             }
         });
 
+        //클릭 이벤트
+        grid.setOnItemClickListener(new AdapterView.OnItemClickListener() { //그리드뷰의 아이템을 클릭했을때
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                Bitmap w=(n==3)?w3:w4; //
+                int i= images.indexOf(w);
+                int[]is={i-n,i+n,i-1,i+1};
+
+                if((position==i-n)||(position==i+n)){
+                    Collections.swap(images,position,i);
+                    grid.setAdapter(new ImageAdapter(context, images, n));//어댑터에 적용
+                    if (Arrays.equals(original,images.toArray(new Bitmap[images.size()]))){ //원본과 같은가?
+                        Toast.makeText(context,"FINISH!",Toast.LENGTH_LONG).show(); //같다면 토스트 메세지 출력!!
+                    }
+                }
+                if((position==i-1)&&(position/n==i/n)){
+                    Collections.swap(images,position,i);
+                    grid.setAdapter(new ImageAdapter(context, images, n));//어댑터에 적용
+                    if (Arrays.equals(original,images.toArray(new Bitmap[images.size()]))){
+                        Toast.makeText(context,"FINISH!",Toast.LENGTH_LONG).show();
+                    }
+                }
+                if((position==i+1)&&(position/n==i/n)){
+                    Collections.swap(images,position,i);
+                    grid.setAdapter(new ImageAdapter(context, images, n));//어댑터에 적용
+                    if (Arrays.equals(original,images.toArray(new Bitmap[images.size()]))){
+                        Toast.makeText(context,"FINISH!",Toast.LENGTH_LONG).show();
+                    }
+                }
+
+            }
+        });
     }
+
     //이미지의 행 개수를 입력 받아 그리드뷰 이미지 세팅해주는 함수
     public void setgrid(int n){
         images.clear(); //이미지 리스트 초기화
         grid.setNumColumns(n); //행 개수 n으로
+        this.n=n;
 
         //비트맵 자르기
         ////createbitmap : 원본, 시작 x, 시작 y, width, height
@@ -85,11 +129,9 @@ public class MainActivity extends AppCompatActivity {
                 images.add(Bitmap.createBitmap(bm,bm.getWidth()/n*j,bm.getHeight()/n*i,bm.getWidth()/n, bm.getHeight()/n));
             }
         }
-        images.get(n*n-1).eraseColor(Color.WHITE); //마지막 칸은 흰색으로 만들기
-
-        //TODO
-        //다 완료했을때 마지막으로 images shuffle하고 넣기
-
+        if (n==3){images.set(n*n-1,w3);}
+        else if(n==4){images.set(n*n-1,w4);}
+        original=images.toArray(new Bitmap[images.size()]);
         grid.setAdapter(new ImageAdapter(context, images, n));//어댑터에 적용
     }
 
@@ -120,7 +162,7 @@ class ImageAdapter extends BaseAdapter{
 
     @Override
     public long getItemId(int position) {
-        return 0;
+        return (position/num)*10+position%num;
     }
 
     @Override
