@@ -6,11 +6,13 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -24,6 +26,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -64,6 +67,7 @@ public class MainActivity extends AppCompatActivity {
                 HttpUrl.Builder urlBuilder=HttpUrl.parse("https://openapi.naver.com/v1/search/image").newBuilder();
                 try {
                     urlBuilder.addQueryParameter("query",URLEncoder.encode(search.getText().toString(),"UTF-8"));
+//                    urlBuilder.addQueryParameter("query",URLEncoder.encode("cat","UTF-8"));
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
@@ -124,7 +128,8 @@ public class MainActivity extends AppCompatActivity {
                         MainActivity.this.runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                image.setImageBitmap(bm);
+
+                                BitmapProcess(bm);
                             }
                         });
                     }
@@ -152,10 +157,9 @@ public class MainActivity extends AppCompatActivity {
         if ((requestCode == GALLERY) && (resultCode == RESULT_OK)) {
             try {
                 InputStream in = getContentResolver().openInputStream(data.getData());
-
                 bm= BitmapFactory.decodeStream(in);
                 in.close();
-                image.setImageBitmap(bm);
+                BitmapProcess(bm);
 
             } catch (Exception e) {
 
@@ -165,5 +169,34 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    void BitmapProcess(Bitmap bm){
+        ArrayList<Bitmap> bms=new ArrayList<Bitmap>();
+        ArrayList nonogram=new ArrayList();
+        int scale= Math.min(bm.getHeight(), bm.getWidth());
+        bm=Bitmap.createBitmap(bm, 0,0,scale,scale);
+        scale=scale/20;
+        for (int i=0; i<20; i++){
+            for (int j=0; j<20; j++){
+                Bitmap tbm = Bitmap.createBitmap(bm,scale*j,scale*i,scale, scale);
+                int R=0,G=0,B=0;
+                int pixel;
+                double gray;
+                for (int x=0; x<scale; x++){
+                    for (int y=0; y<scale; y++){
+                        pixel=tbm.getPixel(x,y);
+                        R=R+Color.red(pixel);
+                        G=G+Color.green(pixel);
+                        B=B+Color.blue(pixel);
+                    }
+                }
+                gray=(0.2126*R+0.7152*G+0.0722*B)/(scale*scale);
+                if (gray>128){nonogram.add(0);}
+                else{nonogram.add(1);}
+            }
+        }
+        image.setImageBitmap(bm);
+        TextView tv= findViewById(R.id.textView);
+        tv.setText(nonogram.toString());
+    }
 
 }
