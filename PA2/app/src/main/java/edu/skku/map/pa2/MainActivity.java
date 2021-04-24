@@ -3,13 +3,17 @@ package edu.skku.map.pa2;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -27,6 +31,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -37,11 +42,15 @@ import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
     static final int GALLERY=0;
-    TextView search;
+    ArrayList<Integer> nonogram;
+    int[] board;
+    EditText search;
     Button searchbtn;
     Button gallerybtn;
     ImageView image;
+    GridView grid;
     Bitmap bm;
+    Context context;
 
 
     @Override
@@ -49,17 +58,24 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        this.context=this;
         search=findViewById(R.id.search);
         searchbtn=findViewById(R.id.searchbtn);
         gallerybtn=findViewById(R.id.gallerybtn);
-
         image=findViewById(R.id.image);
+        grid=findViewById(R.id.grid);
+        board= new int[400];
+        Arrays.fill(board,0);
 
+        grid.setAdapter(new BoardAdapter(context,board));
 
-
+        // search 버튼 눌렀을때
         searchbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                //보드 초기화
+                Arrays.fill(board,0);
+                //naver api start
                 String clientId="EuYpZATCiT4LHkoG8c8Y";
                 String clientSecret="nDiu2p_HYe";
                 OkHttpClient client= new OkHttpClient();
@@ -67,21 +83,18 @@ public class MainActivity extends AppCompatActivity {
                 HttpUrl.Builder urlBuilder=HttpUrl.parse("https://openapi.naver.com/v1/search/image").newBuilder();
                 try {
                     urlBuilder.addQueryParameter("query",URLEncoder.encode(search.getText().toString(),"UTF-8"));
-//                    urlBuilder.addQueryParameter("query",URLEncoder.encode("cat","UTF-8"));
                 } catch (UnsupportedEncodingException e) {
                     e.printStackTrace();
                 }
 
-
                 String apiURL=urlBuilder.build().toString();
-
-
                 Request req=new Request.Builder()
                         .addHeader("X-Naver-Client-Id", clientId)
                         .addHeader("X-Naver-Client-Secret", clientSecret)
                         .url(apiURL)
                         .build();
 
+                // 요청 보내기
                 client.newCall(req).enqueue(new Callback() {
 
                     @Override
@@ -93,11 +106,13 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
 
+                        //Gson 사용해 첫번째로 검색되는 이미지의 주소 가져오기
                         final String Response =response.body().string();
                         Gson gson=new GsonBuilder().create();
                         ImageList items=gson.fromJson(Response, ImageList.class);
                         URL url=new URL(items.getItems().get(0).getThumbnail().toString());
 
+                        // 쓰레드를 사용해 이미지 주소 기반으로 bitmap 가져오기
                         Thread mThread=new Thread(){
                             @Override
                             public void run() {
@@ -127,20 +142,25 @@ public class MainActivity extends AppCompatActivity {
 
                         MainActivity.this.runOnUiThread(new Runnable() {
                             @Override
-                            public void run() {
+                            public void run() {// 가져온 bitmap 기반으로 노노그램 설정
+                                nonogram=BitmapProcess(bm);
 
-                                BitmapProcess(bm);
                             }
                         });
+
                     }
                 });
             }
         });
 
-
+        //Gallery 버튼
         gallerybtn.setOnClickListener(new View.OnClickListener() {
+
+            // 겔러리로 intent 보내기
             @Override
             public void onClick(View v) {
+                //보드 초기화
+                Arrays.fill(board,0);
                 Intent galleryIntent=new Intent()
                         .setType("image/*")
                         .setAction(Intent.ACTION_GET_CONTENT);
@@ -148,18 +168,47 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        grid.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                int i,j=0;
+                if (nonogram!=null){
+                    if (nonogram.get(position)==1){
+                        board[position]=1;
+                        grid.setAdapter(new BoardAdapter(context,board));
+
+                    }
+                    else{
+                        Toast.makeText(context,"WRONG!",Toast.LENGTH_SHORT).show();
+
+                        Arrays.fill(board,0);
+                        grid.setAdapter(new BoardAdapter(context,board));
+                    }
+
+                    //정답 확인용
+                    for (i=0; i<400; i++){
+                        if (nonogram.get(i)==board[i]){j++;}
+                    }
+
+                    if (j==400){
+                        Toast.makeText(context,"FINISH!",Toast.LENGTH_LONG).show();
+                    }
+                }
+
+            }
+        });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-
         super.onActivityResult(requestCode, resultCode, data);
         if ((requestCode == GALLERY) && (resultCode == RESULT_OK)) {
             try {
+                // inputstream으로 bitmap 가져오기
                 InputStream in = getContentResolver().openInputStream(data.getData());
                 bm= BitmapFactory.decodeStream(in);
                 in.close();
-                BitmapProcess(bm);
+                nonogram=BitmapProcess(bm);
 
             } catch (Exception e) {
 
@@ -169,18 +218,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    void BitmapProcess(Bitmap bm){
-        ArrayList<Bitmap> bms=new ArrayList<Bitmap>();
-        ArrayList nonogram=new ArrayList();
+    ArrayList<Integer> BitmapProcess(Bitmap bm){
+        ArrayList<Integer> nonogram=new ArrayList<Integer>();
         int scale= Math.min(bm.getHeight(), bm.getWidth());
         bm=Bitmap.createBitmap(bm, 0,0,scale,scale);
         scale=scale/20;
+        // bitmap 20x20으로 자르기
         for (int i=0; i<20; i++){
             for (int j=0; j<20; j++){
                 Bitmap tbm = Bitmap.createBitmap(bm,scale*j,scale*i,scale, scale);
                 int R=0,G=0,B=0;
                 int pixel;
                 double gray;
+                // 한 조각의 grayscale의 평균을 구해서 흑인지 백인지 정하기
                 for (int x=0; x<scale; x++){
                     for (int y=0; y<scale; y++){
                         pixel=tbm.getPixel(x,y);
@@ -190,13 +240,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
                 gray=(0.2126*R+0.7152*G+0.0722*B)/(scale*scale);
+                // 흑이면 1, 백이면 0
                 if (gray>128){nonogram.add(0);}
                 else{nonogram.add(1);}
             }
         }
         image.setImageBitmap(bm);
-        TextView tv= findViewById(R.id.textView);
-        tv.setText(nonogram.toString());
+        return nonogram;
     }
 
 }
