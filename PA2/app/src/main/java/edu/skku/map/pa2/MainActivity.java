@@ -7,7 +7,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.ColorMatrix;
+import android.graphics.ColorMatrixColorFilter;
+import android.graphics.Paint;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -220,17 +224,37 @@ public class MainActivity extends AppCompatActivity {
 
     ArrayList<Integer> BitmapProcess(Bitmap bm){
         ArrayList<Integer> nonogram=new ArrayList<Integer>();
+
+        // 1. Resizeing image into square
         int scale= Math.min(bm.getHeight(), bm.getWidth());
         bm=Bitmap.createBitmap(bm, 0,0,scale,scale);
+
+        //2. Convert image into black and white photos
+        for (int x = 0; x<scale; x++){
+            for (int y=0; y<scale; y++){
+                int R,G,B,A;
+                int pixel;
+                int gray;
+                pixel=bm.getPixel(x,y);
+                A = Color.alpha(pixel);
+                R=Color.red(pixel);
+                G=Color.green(pixel);
+                B=Color.blue(pixel);
+                gray=((0.2126*R+0.7152*G+0.0722*B)>128)?255:0;
+                bm.setPixel(x,y,Color.argb(A,gray,gray,gray));
+            }
+            
+        }
+            
+        // 3-1.Split images into 20 * 20 pieces
         scale=scale/20;
-        // bitmap 20x20으로 자르기
         for (int i=0; i<20; i++){
             for (int j=0; j<20; j++){
                 Bitmap tbm = Bitmap.createBitmap(bm,scale*j,scale*i,scale, scale);
                 int R=0,G=0,B=0;
                 int pixel;
                 double gray;
-                // 한 조각의 grayscale의 평균을 구해서 흑인지 백인지 정하기
+                // 3-2. determine the block’s color
                 for (int x=0; x<scale; x++){
                     for (int y=0; y<scale; y++){
                         pixel=tbm.getPixel(x,y);
@@ -239,6 +263,7 @@ public class MainActivity extends AppCompatActivity {
                         B=B+Color.blue(pixel);
                     }
                 }
+                //
                 gray=(0.2126*R+0.7152*G+0.0722*B)/(scale*scale);
                 // 흑이면 1, 백이면 0
                 if (gray>128){nonogram.add(0);}
