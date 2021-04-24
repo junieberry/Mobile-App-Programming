@@ -12,9 +12,9 @@ import java.util.Arrays;
 
 public class BoardAdapter extends BaseAdapter {
     Context context;
-    int[] board;
+    Integer[] board;
 
-    BoardAdapter(Context context, int[] board){
+    BoardAdapter(Context context, Integer[] board){
         this.board=board;
         this.context=context;
     }

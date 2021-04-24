@@ -7,11 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Paint;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -19,7 +15,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -47,12 +42,15 @@ import okhttp3.Response;
 public class MainActivity extends AppCompatActivity {
     static final int GALLERY=0;
     ArrayList<Integer> nonogram;
-    int[] board;
+    Integer[] board;
+    int[] row;
+    int[] column;
     EditText search;
     Button searchbtn;
     Button gallerybtn;
-    ImageView image;
     GridView grid;
+    GridView row_grid;
+    GridView col_grid;
     Bitmap bm;
     Context context;
 
@@ -66,9 +64,15 @@ public class MainActivity extends AppCompatActivity {
         search=findViewById(R.id.search);
         searchbtn=findViewById(R.id.searchbtn);
         gallerybtn=findViewById(R.id.gallerybtn);
-        image=findViewById(R.id.image);
         grid=findViewById(R.id.grid);
-        board= new int[400];
+        row_grid=findViewById(R.id.row_grid);
+        col_grid=findViewById(R.id.col_grid);
+        board= new Integer[400];
+        row= new int[200];
+        column= new int[400];
+
+        Arrays.fill(board,0);
+        Arrays.fill(row,0);
         Arrays.fill(board,0);
 
         grid.setAdapter(new BoardAdapter(context,board));
@@ -148,6 +152,10 @@ public class MainActivity extends AppCompatActivity {
                             @Override
                             public void run() {// 가져온 bitmap 기반으로 노노그램 설정
                                 nonogram=BitmapProcess(bm);
+                                row=SetRow(nonogram);
+                                column=Setcolumn(nonogram);
+                                row_grid.setAdapter(new LineAdapter(context, row));
+                                col_grid.setAdapter(new LineAdapter(context, column));
 
                             }
                         });
@@ -184,17 +192,13 @@ public class MainActivity extends AppCompatActivity {
                     }
                     else{
                         Toast.makeText(context,"WRONG!",Toast.LENGTH_SHORT).show();
-
                         Arrays.fill(board,0);
                         grid.setAdapter(new BoardAdapter(context,board));
                     }
 
-                    //정답 확인용
-                    for (i=0; i<400; i++){
-                        if (nonogram.get(i)==board[i]){j++;}
-                    }
 
-                    if (j==400){
+                    //정답 확인용
+                    if (Arrays.equals(board, nonogram.toArray(new Integer[nonogram.size()]))){
                         Toast.makeText(context,"FINISH!",Toast.LENGTH_LONG).show();
                     }
                 }
@@ -213,6 +217,10 @@ public class MainActivity extends AppCompatActivity {
                 bm= BitmapFactory.decodeStream(in);
                 in.close();
                 nonogram=BitmapProcess(bm);
+                row=SetRow(nonogram);
+                column=Setcolumn(nonogram);
+                row_grid.setAdapter(new LineAdapter(context, row));
+                col_grid.setAdapter(new LineAdapter(context, column));
 
             } catch (Exception e) {
 
@@ -263,15 +271,70 @@ public class MainActivity extends AppCompatActivity {
                         B=B+Color.blue(pixel);
                     }
                 }
-                //
+                // 3-3 average grayscale value
                 gray=(0.2126*R+0.7152*G+0.0722*B)/(scale*scale);
                 // 흑이면 1, 백이면 0
                 if (gray>128){nonogram.add(0);}
                 else{nonogram.add(1);}
             }
         }
-        image.setImageBitmap(bm);
         return nonogram;
     }
 
+    int[] SetRow(ArrayList nonogram){
+        int[] Row=new int [200];
+        Arrays.fill(Row,0);
+
+        // line set
+        for (int i=0; i<20; i++){
+            ArrayList<Integer> row = new ArrayList<Integer>();
+            int sum=0;
+            for (int j=0; j<20; j++){
+                if (nonogram.get(20 * i + j).toString().equals("1")){
+                    sum++;
+                    if (j==19){
+                        row.add(sum);
+                    }
+                }
+                else if (sum!=0){
+                    row.add(sum);
+                    sum=0;
+                }
+            }
+
+            for (int j=0; j<row.size(); j++){
+                Row[10*i+9-j]=row.get(j);
+            }
+        }
+        return Row;
+    }
+
+    int[] Setcolumn(ArrayList<Integer> nonogram){
+        int[] Column=new int [200];
+        Arrays.fill(Column,0);
+
+        // line set
+        for (int i=0; i<20; i++){
+            ArrayList<Integer> column = new ArrayList<Integer>();
+            int sum=0;
+            for (int j=0; j<20; j++){
+                if (nonogram.get(20 * j + i).toString().equals("1")){
+                    sum++;
+                    if (j==19){
+                        column.add(sum);
+                    }
+                }
+                else if (sum!=0){
+                    column.add(sum);
+                    sum=0;
+                }
+            }
+
+            for (int j=0; j<column.size(); j++){
+                Column[20*(9-j)+i]=column.get(j);
+            }
+        }
+
+        return Column;
+    }
 }

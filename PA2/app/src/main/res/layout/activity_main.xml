@@ -48,9 +48,7 @@
         android:id="@+id/grid"
         android:layout_width="300dp"
         android:layout_height="300dp"
-        android:layout_marginTop="272dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginRight="16dp"
+        android:layout_marginTop="248dp"
         android:background="#EEF0F1"
         android:horizontalSpacing="2dp"
         android:listSelector="@null"
@@ -59,13 +57,26 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
-        android:id="@+id/image"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <GridView
+        android:id="@+id/row_grid"
+        android:layout_width="116dp"
+        android:layout_height="298dp"
+        android:layout_marginTop="248dp"
+        android:listSelector="@null"
+        android:numColumns="10"
+        android:verticalSpacing="2dp"
+        app:layout_constraintEnd_toStartOf="@+id/grid"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <GridView
+        android:id="@+id/col_grid"
+        android:layout_width="300dp"
+        android:layout_height="130dp"
+        android:layout_marginBottom="4dp"
+        android:numColumns="20"
+        app:layout_constraintBottom_toTopOf="@+id/grid"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        tools:srcCompat="@tools:sample/avatars" />
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
