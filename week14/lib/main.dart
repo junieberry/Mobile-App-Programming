@@ -71,23 +71,33 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("week 14"),
-      ),
-      body: FutureBuilder<List<Photo>>(
-        future: fetchPhotos(http.Client()),
-        builder: (context, snapshot) {
-          if (snapshot.hasError) print(snapshot.data);
+        appBar: AppBar(
+          title: Text("week 14"),
+        ),
+        body: Center(
+          child: Column(
+            children: [
+              ElevatedButton(
+                  onPressed: _increment,
+                  child: Text("HTTP request button : $_count clicked")),
+              Expanded(
+                child: FutureBuilder<List<Photo>>(
+                  future: fetchPhotos(http.Client()),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) print(snapshot.data);
 
-          return snapshot.hasData
-              ? PhotoList(
-                  photos: snapshot.data,
-                  count: _count,
-                )
-              : Center(child: CircularProgressIndicator());
-        },
-      ),
-    );
+                    return snapshot.hasData
+                        ? PhotoList(
+                            photos: snapshot.data,
+                            count: _count,
+                          )
+                        : Center(child: CircularProgressIndicator());
+                  },
+                ),
+              )
+            ],
+          ),
+        ));
   }
 }
 
@@ -103,7 +113,7 @@ class PhotoList extends StatelessWidget {
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
       ),
-      itemCount: photos.length,
+      itemCount: count * count,
       itemBuilder: (context, index) {
         return Image.network(photos[index].thumbnailUrl);
       },
