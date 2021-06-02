@@ -127,7 +127,10 @@ class LoginPage extends StatelessWidget {
                     ElevatedButton(
                         onPressed: () {
                           Navigator.pushNamed(context, "/navigation",
-                              arguments: {"id": _loginprovider.id.toString()});
+                              arguments: {
+                                "id": _loginprovider.id.toString(),
+                                "previous": "Login Page"
+                              });
                         },
                         child: Text("Start CORONA LIVE"))
                   ],
