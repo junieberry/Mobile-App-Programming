@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pa3/navigation.dart';
+import 'package:pa3/vaccine.dart';
+import 'package:pa3/death.dart';
 
 class LoginProvider with ChangeNotifier {
   int login = 0;
@@ -38,6 +40,14 @@ class MyApp extends StatelessWidget {
             case '/navigation':
               return MaterialPageRoute(
                   builder: (_) => Navigation(routerSettings.arguments));
+              break;
+            case '/death':
+              return MaterialPageRoute(
+                  builder: (_) => Death(routerSettings.arguments));
+              break;
+            case '/vaccine':
+              return MaterialPageRoute(
+                  builder: (_) => Vaccine(routerSettings.arguments));
               break;
             default:
               return MaterialPageRoute(

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:pa3/vaccine.dart';
-import 'package:pa3/death.dart';
 
 class Navigation extends StatelessWidget {
   final Map<String, String> arguments;
@@ -15,11 +13,8 @@ class Navigation extends StatelessWidget {
             children: [
               TextButton(
                   onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (BuildContext context) => Death(),
-                        ));
+                    Navigator.pushNamed(context, "/death",
+                        arguments: {"id": arguments['id']});
                   },
                   child: Row(
                     children: [
@@ -35,11 +30,8 @@ class Navigation extends StatelessWidget {
                   )),
               TextButton(
                   onPressed: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (BuildContext context) => Vaccine(),
-                        ));
+                    Navigator.pushNamed(context, "/vaccine",
+                        arguments: {"id": arguments['id']});
                   },
                   child: Row(
                     children: [
