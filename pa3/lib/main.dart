@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import 'package:pa3/navigation.dart';
 import 'package:pa3/vaccine.dart';
 import 'package:pa3/death.dart';
@@ -50,8 +51,7 @@ class MyApp extends StatelessWidget {
                   builder: (_) => Vaccine(routerSettings.arguments));
               break;
             default:
-              return MaterialPageRoute(
-                  builder: (_) => Navigation(routerSettings.arguments));
+              return MaterialPageRoute(builder: (_) => LoginPage());
               break;
           }
         },
